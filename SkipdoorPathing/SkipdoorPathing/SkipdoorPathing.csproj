@@ -61,9 +61,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="HarmonyPatch_Pawn_PathFollower.cs" />
+    <Compile Include="Patches\HarmonyPatch_Pawn_PathFollower_StartPath.cs" />
     <Compile Include="ModMain.cs" />
-    <Compile Include="SkipdoorPathingUtil.cs" />
+    <Compile Include="Patches\HarmonyPatch_Pawn_SpawnSetup.cs" />
+    <Compile Include="Patches\HarmonyPatch_Pawn_Tick.cs" />
+    <Compile Include="Patches\HarmonyPatch_ToilsHaul_StartCarryThing.cs" />
+    <Compile Include="Utilities\JobPersistence.cs" />
+    <Compile Include="Utilities\SkipdoorPathingUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
