@@ -10,9 +10,13 @@ namespace SkipdoorPathing {
     public class SavedPawnState
     {
         public bool wasDrafted;
+
         public Job currentJob;
+
         public JobQueue jobQueue;
+
         public Thing carriedThing;
+
         public int carriedCount;
     }
 
@@ -20,8 +24,11 @@ namespace SkipdoorPathing {
     public static class JobPersistence
     {
         public static bool IsRestoringJob = false;
+
         private static Dictionary<int, SavedPawnState> savedStates = new Dictionary<int, SavedPawnState>();
+
         private static HashSet<int> pawnsToRestore = new HashSet<int>();
+
         private static Dictionary<int, int> teleportCooldowns = new Dictionary<int, int>();
 
         public static bool HasSavedState(Pawn pawn)
@@ -100,12 +107,6 @@ namespace SkipdoorPathing {
             {
                 return false;
             }
-
-            if (pawn.Map == null)
-            {
-                return false;
-            }
-
             SavedPawnState state = savedStates[pawn.thingIDNumber];
             if (state.wasDrafted && !pawn.Drafted)
             {

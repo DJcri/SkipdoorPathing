@@ -44,7 +44,8 @@ namespace SkipdoorPathing
             }
             PathFinder pathFinder = pawn.Map.pathFinder;
             IntVec3 position = pawn.Position;
-            PawnPath originalPath = pathFinder.FindPathNow(position, destination, pawn, null, peMode);
+            PathEndMode peMode2 = peMode;
+            PawnPath originalPath = pathFinder.FindPathNow(position, destination, pawn, null, peMode2);
             if (originalPath == null)
             {
                 return false;
@@ -55,39 +56,20 @@ namespace SkipdoorPathing
             DoorTeleporter bestStart = null;
             DoorTeleporter bestEnd = null;
             PawnPath tempBestPathToStartSegment = null;
-            List<DoorTeleporter> mapTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters
-                            .Where(t => t.Map == pawn.Map)
-                            .ToList();
-
-            if (mapTeleporters.Count < 2)
-            {
-                return false; // Not enough teleporters on this map to form a pair
-            }
-
-            var validTeleporterPairs = mapTeleporters
-                .GroupBy(t => t.RenamableLabel)
-                .Where(g => g.Count() == 2) // Only proceed with groups that have exactly two teleporters
-                .Select(g => new {
-                    Start = g.First(),
-                    End = g.Last()
-                })
-                .SelectMany(pair => new[]
-                {
-                    new { Start = pair.Start, End = pair.End }, // Start -> End
-                    new { Start = pair.End, End = pair.Start }  // End -> Start (for bidirectional travel)
-                });
-
-            foreach (var pair in validTeleporterPairs)
+            List<DoorTeleporter> allTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.ToList();
+            var allTeleporterPairs = allTeleporters.SelectMany((DoorTeleporter start) => from end in allTeleporters
+                                                                                         where end != start && end.Label == start.Label && end.Map == start.Map
+                                                                                         select new
+                                                                                         {
+                                                                                             Start = start,
+                                                                                             End = end
+                                                                                         });
+            foreach (var pair in allTeleporterPairs)
             {
                 DoorTeleporter teleporterToPathTo = pair.Start;
                 DoorTeleporter teleporter = pair.End;
                 if (teleporterToPathTo.DestroyedOrNull() || teleporter.DestroyedOrNull())
                 {
-                    continue;
-                }
-                if (!pawn.Map.reachability.CanReach(pawn.Position, teleporterToPathTo, peMode, TraverseMode.ByPawn, Danger.Deadly))
-                {
-                    Log.Message("SkipdoorPathing: Cannot reach destination " + destination.ToString() + " from teleporter " + teleporter.RenamableLabel + ".");
                     continue;
                 }
                 PawnPath pathToStart = pawn.Map.pathFinder.FindPathNow(pawn.Position, teleporterToPathTo.Position, pawn);
@@ -98,13 +80,8 @@ namespace SkipdoorPathing
                 }
                 PathFinder pathFinder2 = pawn.Map.pathFinder;
                 IntVec3 position2 = teleporter.Position;
-                if (!pawn.Map.reachability.CanReach(pawn.Position, position2, peMode, TraverseMode.ByPawn, Danger.Deadly))
-                {
-                    Log.Message("SkipdoorPathing: Cannot reach destination " + destination.ToString() + " from teleporter " + teleporter.RenamableLabel + ".");
-                    pathToStart.Dispose();
-                    continue;
-                }
-                PawnPath pathToDest = pathFinder2.FindPathNow(position2, destination, pawn, null, peMode);
+                peMode2 = peMode;
+                PawnPath pathToDest = pathFinder2.FindPathNow(position2, destination, pawn, null, peMode2);
                 if (pathToDest == null)
                 {
                     pathToStart?.Dispose();
@@ -135,4 +112,5 @@ namespace SkipdoorPathing
             return false;
         }
     }
+
 }

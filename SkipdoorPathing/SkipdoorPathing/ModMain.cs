@@ -16,7 +16,8 @@ namespace SkipdoorPathing
         public ModMain(ModContentPack content)
             : base(content)
         {
-            Instance = this;
+            //IL_000e: Unknown result type (might be due to invalid IL or missing references)
+            //IL_0018: Expected O, but got Unknown
             harmony = new Harmony("DCSzar.SkipdoorPathing");
             harmony.PatchAll();
             Instance = this;
