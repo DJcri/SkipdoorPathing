@@ -101,7 +101,7 @@ namespace SkipdoorPathing {
                 return false;
             }
 
-            if (pawn.Map == null || !pawn.Map.IsPlayerHome)
+            if (pawn.Map == null)
             {
                 return false;
             }
