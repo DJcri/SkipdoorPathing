@@ -19,17 +19,11 @@ namespace SkipdoorPathing
             try
             {
                 Pawn pawn = Traverse.Create((object)__instance).Field("pawn").GetValue<Pawn>();
-                if (JobPersistence.IsOnCooldown(pawn) || pawn.DestroyedOrNull() || pawn.Map == null || pawn.Faction == null || (!pawn.IsColonistPlayerControlled && !pawn.IsPlayerControlledCaravanMember()) || (pawn.jobs.curJob != null && pawn.jobs.curJob.def == VEFDefOf.VEF_UseDoorTeleporter) || !dest.IsValid)
+                if (pawn.DestroyedOrNull() || pawn.Map == null || !dest.IsValid)
                 {
                     return true;
                 }
-                Lord lord = pawn.GetLord();
-                if (lord != null && (lord.LordJob is LordJob_Joinable_MarriageCeremony || lord.LordJob is LordJob_Joinable_Gathering || lord.LordJob is LordJob_BestowingCeremony || lord.LordJob is LordJob_Ritual))
-                {
-                    return true;
-                }
-                Pawn_RopeTracker roping = pawn.roping;
-                if ((roping != null && roping.IsRopingOthers) || pawn.roping.Ropees.Count > 0)
+                if (!SkipExclusionUtility.ShouldSkipdoor(pawn))
                 {
                     return true;
                 }

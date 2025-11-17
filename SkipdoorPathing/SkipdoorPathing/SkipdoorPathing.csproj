@@ -66,7 +66,9 @@
     <Compile Include="Patches\HarmonyPatch_Pawn_SpawnSetup.cs" />
     <Compile Include="Patches\HarmonyPatch_Pawn_Tick.cs" />
     <Compile Include="Patches\HarmonyPatch_ToilsHaul_StartCarryThing.cs" />
+    <Compile Include="Settings.cs" />
     <Compile Include="Utilities\JobPersistence.cs" />
+    <Compile Include="Utilities\SkipExclusionUtility.cs" />
     <Compile Include="Utilities\SkipdoorPathingUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

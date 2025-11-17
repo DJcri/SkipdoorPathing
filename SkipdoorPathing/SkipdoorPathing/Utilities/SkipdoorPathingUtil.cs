@@ -44,8 +44,7 @@ namespace SkipdoorPathing
             }
             PathFinder pathFinder = pawn.Map.pathFinder;
             IntVec3 position = pawn.Position;
-            PathEndMode peMode2 = peMode;
-            PawnPath originalPath = pathFinder.FindPathNow(position, destination, pawn, null, peMode2);
+            PawnPath originalPath = pathFinder.FindPathNow(position, destination, pawn, null, peMode);
             if (originalPath == null)
             {
                 return false;
@@ -56,51 +55,77 @@ namespace SkipdoorPathing
             DoorTeleporter bestStart = null;
             DoorTeleporter bestEnd = null;
             PawnPath tempBestPathToStartSegment = null;
-            List<DoorTeleporter> allTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.ToList();
-            var allTeleporterPairs = allTeleporters.SelectMany((DoorTeleporter start) => from end in allTeleporters
-                                                                                         where end != start && end.Label == start.Label && end.Map == start.Map
-                                                                                         select new
-                                                                                         {
-                                                                                             Start = start,
-                                                                                             End = end
-                                                                                         });
-            foreach (var pair in allTeleporterPairs)
+            List<DoorTeleporter> mapTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.Where((DoorTeleporter t) => t.Map == pawn.Map).ToList();
+            if (mapTeleporters.Count < 2)
             {
-                DoorTeleporter teleporterToPathTo = pair.Start;
-                DoorTeleporter teleporter = pair.End;
-                if (teleporterToPathTo.DestroyedOrNull() || teleporter.DestroyedOrNull())
+                return false;
+            }
+            List<DoorTeleporter> potentialEndTeleporters = new List<DoorTeleporter>();
+            foreach (DoorTeleporter teleporter in mapTeleporters)
+            {
+                if (pawn.Map.reachability.CanReach(teleporter.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
+                {
+                    potentialEndTeleporters.Add(teleporter);
+                }
+            }
+            if (potentialEndTeleporters.Count == 0)
+            {
+                return false;
+            }
+            foreach (DoorTeleporter endCandidate in mapTeleporters)
+            {
+                if (endCandidate.DestroyedOrNull() || !pawn.Map.reachability.CanReach(endCandidate.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
                 {
                     continue;
                 }
-                PawnPath pathToStart = pawn.Map.pathFinder.FindPathNow(pawn.Position, teleporterToPathTo.Position, pawn);
-                if (pathToStart == null || pathToStart.TotalCost >= bestTotalCost)
-                {
-                    pathToStart?.Dispose();
-                    continue;
-                }
-                PathFinder pathFinder2 = pawn.Map.pathFinder;
-                IntVec3 position2 = teleporter.Position;
-                peMode2 = peMode;
-                PawnPath pathToDest = pathFinder2.FindPathNow(position2, destination, pawn, null, peMode2);
+                PawnPath pathToDest = pawn.Map.pathFinder.FindPathNow(endCandidate.Position, destination, pawn, null, peMode);
                 if (pathToDest == null)
                 {
-                    pathToStart?.Dispose();
                     continue;
                 }
-                float totalTeleportCost = pathToStart.TotalCost + pathToDest.TotalCost + ModMain.PENALTY_FOR_USING_TELEPORTER;
-                if (totalTeleportCost < bestTotalCost)
+                float costToDest = pathToDest.TotalCost;
+                pathToDest.Dispose();
+                DoorTeleporter bestStartCandidate = null;
+                PawnPath bestPathToStart = null;
+                float bestCostToStart = float.MaxValue;
+                foreach (DoorTeleporter startCandidate in mapTeleporters)
                 {
-                    tempBestPathToStartSegment?.Dispose();
-                    bestTotalCost = totalTeleportCost;
-                    tempBestPathToStartSegment = pathToStart;
-                    bestStart = teleporterToPathTo;
-                    bestEnd = teleporter;
+                    if (startCandidate.DestroyedOrNull() || startCandidate == endCandidate || !pawn.Map.reachability.CanReach(startCandidate.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
+                    {
+                        continue;
+                    }
+                    PawnPath pathToStart = pawn.Map.pathFinder.FindPathNow(pawn.Position, startCandidate.Position, pawn);
+                    if (pathToStart != null)
+                    {
+                        if (pathToStart.TotalCost < bestCostToStart)
+                        {
+                            bestPathToStart?.Dispose();
+                            bestCostToStart = pathToStart.TotalCost;
+                            bestPathToStart = pathToStart;
+                            bestStartCandidate = startCandidate;
+                        }
+                        else
+                        {
+                            pathToStart.Dispose();
+                        }
+                    }
                 }
-                else
+                if (bestStartCandidate != null)
                 {
-                    pathToStart?.Dispose();
+                    float totalTeleportCost = bestCostToStart + costToDest + ModMain.PENALTY_FOR_USING_TELEPORTER;
+                    if (totalTeleportCost < bestTotalCost)
+                    {
+                        tempBestPathToStartSegment?.Dispose();
+                        bestTotalCost = totalTeleportCost;
+                        tempBestPathToStartSegment = bestPathToStart;
+                        bestStart = bestStartCandidate;
+                        bestEnd = endCandidate;
+                    }
+                    else
+                    {
+                        bestPathToStart?.Dispose();
+                    }
                 }
-                pathToDest?.Dispose();
             }
             if (tempBestPathToStartSegment != null)
             {
@@ -112,5 +137,4 @@ namespace SkipdoorPathing
             return false;
         }
     }
-
 }

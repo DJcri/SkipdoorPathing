@@ -107,6 +107,10 @@ namespace SkipdoorPathing {
             {
                 return false;
             }
+            if (pawn.Map == null)
+            {
+                return false;
+            }
             SavedPawnState state = savedStates[pawn.thingIDNumber];
             if (state.wasDrafted && !pawn.Drafted)
             {
