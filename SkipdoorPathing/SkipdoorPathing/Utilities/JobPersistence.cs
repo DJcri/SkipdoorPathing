@@ -20,11 +20,8 @@ namespace SkipdoorPathing {
     public static class JobPersistence
     {
         public static bool IsRestoringJob = false;
-
         private static Dictionary<int, SavedPawnState> savedStates = new Dictionary<int, SavedPawnState>();
-
         private static HashSet<int> pawnsToRestore = new HashSet<int>();
-
         private static Dictionary<int, int> teleportCooldowns = new Dictionary<int, int>();
 
         public static bool HasSavedState(Pawn pawn)
@@ -103,6 +100,12 @@ namespace SkipdoorPathing {
             {
                 return false;
             }
+
+            if (pawn.Map == null || !pawn.Map.IsPlayerHome)
+            {
+                return false;
+            }
+
             SavedPawnState state = savedStates[pawn.thingIDNumber];
             if (state.wasDrafted && !pawn.Drafted)
             {
@@ -110,19 +113,34 @@ namespace SkipdoorPathing {
             }
             if (state.carriedThing != null)
             {
-                if (pawn.carryTracker.CarriedThing != null && pawn.carryTracker.CarriedThing == state.carriedThing)
+                if (state.carriedCount <= 0)
+                {
+                    Log.Error($"SkipdoorPathing: Aborting carried item restore for {pawn.LabelShort} because saved count was {state.carriedCount}. Removing saved item state to continue job restoration.");
+                    state.carriedThing = null;
+                    state.carriedCount = 0;
+                }
+                else if (pawn.carryTracker.CarriedThing != null && pawn.carryTracker.CarriedThing == state.carriedThing)
                 {
                     Log.Message("SkipdoorPathing: Pawn " + pawn.LabelShort + " successfully kept " + state.carriedThing.LabelShort + " during teleport.");
                 }
                 else
                 {
-                    if (pawn.carryTracker.TryStartCarry(state.carriedThing, state.carriedCount) <= 0)
+                    int countCarried = pawn.carryTracker.TryStartCarry(state.carriedThing, state.carriedCount);
+                    if (countCarried <= 0)
                     {
-                        Log.Warning("SkipdoorPathing: Failed to restore carried item for " + pawn.LabelShort + ". Cannot restore job.");
-                        savedStates.Remove(pawn.thingIDNumber);
-                        return true;
+                        Log.Warning("SkipdoorPathing: Failed to restore carried item for " + pawn.LabelShort + ". Carry attempt returned " + countCarried + ". The job will be restored, but the item is lost.");
+                        state.carriedThing = null;
+                        state.carriedCount = 0;
                     }
-                    Log.Message("SkipdoorPathing: Pawn " + pawn.LabelShort + " successfully restored carrying " + state.carriedThing.LabelShort + ".");
+                    else if (countCarried < state.carriedCount)
+                    {
+                        Log.Warning($"SkipdoorPathing: Pawn {pawn.LabelShort} only restored carrying {countCarried} of {state.carriedCount} {state.carriedThing.LabelShort}. Adjusting job count.");
+                        state.carriedCount = countCarried;
+                    }
+                    else
+                    {
+                        Log.Message("SkipdoorPathing: Pawn " + pawn.LabelShort + " successfully restored carrying " + state.carriedThing.LabelShort + ".");
+                    }
                 }
             }
             if (state.currentJob == null)
@@ -161,7 +179,15 @@ namespace SkipdoorPathing {
                 IsRestoringJob = true;
                 try
                 {
-                    pawn.jobs.TryTakeOrderedJob(state.currentJob, JobTag.DraftedOrder);
+                    if (state.wasDrafted || state.currentJob.targetA.Thing is Pawn)
+                    {
+                        pawn.jobs.StartJob(state.currentJob, JobCondition.InterruptForced, null, resumeCurJobAfterwards: false, cancelBusyStances: true, null, null, fromQueue: false, canReturnCurJobToPool: true);
+                        Log.Message("SkipdoorPathing: Forced StartJob for drafted/carried pawn " + pawn.LabelShort + " on restore.");
+                    }
+                    else
+                    {
+                        pawn.jobs.TryTakeOrderedJob(state.currentJob, JobTag.DraftedOrder);
+                    }
                     if (state.jobQueue != null)
                     {
                         List<QueuedJob> jobList = state.jobQueue.ToList();
@@ -172,8 +198,9 @@ namespace SkipdoorPathing {
                     }
                     teleportCooldowns[pawn.thingIDNumber] = Find.TickManager.TicksGame + ModMain.TELEPORTER_CHECK_INTERVAL * 2;
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
+                    Log.Error("SkipdoorPathing: Exception during job restore for " + pawn.LabelShort + ": " + ex.Message);
                 }
                 finally
                 {

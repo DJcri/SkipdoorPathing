@@ -1,10 +1,13 @@
-﻿using System;
+﻿
+using System;
 using HarmonyLib;
+using RimWorld;
 using RimWorld.Planet;
 using SkipdoorPathing;
 using VEF;
 using Verse;
 using Verse.AI;
+using Verse.AI.Group;
 
 namespace SkipdoorPathing
 {
@@ -16,23 +19,17 @@ namespace SkipdoorPathing
             try
             {
                 Pawn pawn = Traverse.Create((object)__instance).Field("pawn").GetValue<Pawn>();
-                if (JobPersistence.IsOnCooldown(pawn))
+                if (JobPersistence.IsOnCooldown(pawn) || pawn.DestroyedOrNull() || pawn.Map == null || pawn.Faction == null || (!pawn.IsColonistPlayerControlled && !pawn.IsPlayerControlledCaravanMember()) || (pawn.jobs.curJob != null && pawn.jobs.curJob.def == VEFDefOf.VEF_UseDoorTeleporter) || !dest.IsValid)
                 {
                     return true;
                 }
-                if (pawn.DestroyedOrNull() || pawn.Map == null || pawn.Faction == null)
+                Lord lord = pawn.GetLord();
+                if (lord != null && (lord.LordJob is LordJob_Joinable_MarriageCeremony || lord.LordJob is LordJob_Joinable_Gathering || lord.LordJob is LordJob_BestowingCeremony || lord.LordJob is LordJob_Ritual))
                 {
                     return true;
                 }
-                if (!pawn.IsColonistPlayerControlled && !pawn.IsPlayerControlledCaravanMember())
-                {
-                    return true;
-                }
-                if (pawn.jobs.curJob != null && pawn.jobs.curJob.def == VEFDefOf.VEF_UseDoorTeleporter)
-                {
-                    return true;
-                }
-                if (!dest.IsValid)
+                Pawn_RopeTracker roping = pawn.roping;
+                if ((roping != null && roping.IsRopingOthers) || pawn.roping.Ropees.Count > 0)
                 {
                     return true;
                 }

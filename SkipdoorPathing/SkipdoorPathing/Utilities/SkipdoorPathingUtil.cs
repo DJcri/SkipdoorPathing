@@ -56,15 +56,29 @@ namespace SkipdoorPathing
             DoorTeleporter bestStart = null;
             DoorTeleporter bestEnd = null;
             PawnPath tempBestPathToStartSegment = null;
-            List<DoorTeleporter> allTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.ToList();
-            var allTeleporterPairs = allTeleporters.SelectMany((DoorTeleporter start) => from end in allTeleporters
-                                                                                         where start != end
-                                                                                         select new
-                                                                                         {
-                                                                                             Start = start,
-                                                                                             End = end
-                                                                                         });
-            foreach (var pair in allTeleporterPairs)
+            List<DoorTeleporter> mapTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters
+                            .Where(t => t.Map == pawn.Map)
+                            .ToList();
+
+            if (mapTeleporters.Count < 2)
+            {
+                return false; // Not enough teleporters on this map to form a pair
+            }
+
+            var validTeleporterPairs = mapTeleporters
+                .GroupBy(t => t.Label)
+                .Where(g => g.Count() == 2) // Only proceed with groups that have exactly two teleporters
+                .Select(g => new {
+                    Start = g.First(),
+                    End = g.Last()
+                })
+                .SelectMany(pair => new[]
+                {
+                    new { Start = pair.Start, End = pair.End }, // Start -> End
+                    new { Start = pair.End, End = pair.Start }  // End -> Start (for bidirectional travel)
+                });
+
+            foreach (var pair in validTeleporterPairs)
             {
                 DoorTeleporter teleporterToPathTo = pair.Start;
                 DoorTeleporter teleporter = pair.End;
@@ -112,4 +126,5 @@ namespace SkipdoorPathing
             return false;
         }
     }
+
 }
