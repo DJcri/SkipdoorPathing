@@ -34,6 +34,18 @@ namespace SkipdoorPathing
             {
                 return false;
             }
+            if (pawn.HomeFaction != null &&
+                !pawn.HomeFaction.Equals(Faction.OfPlayer))
+            {
+                return false;
+            }
+            if (pawn.GuestStatus != null &&
+                (pawn.GuestStatus == GuestStatus.Guest ||
+                pawn.GuestStatus == GuestStatus.Prisoner ||
+                pawn.GuestStatus == GuestStatus.Slave))
+            {
+                return false;
+            }
             if (pawn.RaceProps.Animal && ModMain.Settings != null && !ModMain.Settings.CanAnimalsUseSkipdoors)
             {
                 return false;
