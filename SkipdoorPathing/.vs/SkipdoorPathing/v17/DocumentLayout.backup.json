@@ -7,20 +7,23 @@
       "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\utilities\\skipdoorpathingutil.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\patches\\harmonypatch_pawn_pathfollower_startpath.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\patches\\harmonypatch_pawn_pathfollower_startpath.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\patches\\harmonypatch_pawn_spawnsetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\patches\\harmonypatch_pawn_spawnsetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\utilities\\skipexclusionutility.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\utilities\\skipexclusionutility.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\utilities\\jobpersistence.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\utilities\\jobpersistence.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{00000000-0000-0000-0000-000000000000}|\u003CSolution\u003E|SkipdoorPathing||{04B8AB82-A572-4FEF-95CE-5222444B6B64}|"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\patches\\harmonypatch_pawn_spawnsetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\patches\\harmonypatch_pawn_spawnsetup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\patches\\harmonypatch_pawn_pathfollower_startpath.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\patches\\harmonypatch_pawn_pathfollower_startpath.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\utilities\\jobpersistence.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\utilities\\jobpersistence.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\modmain.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -37,6 +40,9 @@
     {
       "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\skipdoorpathing\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|solutionrelative:skipdoorpathing\\settings.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{649BA4AA-A15D-4460-8FA5-2CB0CF3B9357}|SkipdoorPathing\\SkipdoorPathing.csproj|c:\\program files (x86)\\steam\\steamapps\\common\\rimworld\\mods\\skipdoorpathing\\skipdoorpathing\\skipdoorpathing\\||{B270807C-D8C6-49EB-8EBE-8E8D566637A1}|a54ad834-9219-4aa6-b589-607af21c3e26"
     }
   ],
   "DocumentGroupContainers": [
@@ -46,8 +52,20 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 3,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "SkipdoorPathing",
+              "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing.csproj",
+              "RelativeDocumentMoniker": "SkipdoorPathing\\SkipdoorPathing.csproj",
+              "ToolTip": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing.csproj",
+              "RelativeToolTip": "SkipdoorPathing\\SkipdoorPathing.csproj",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-11-19T07:55:08.173Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Document",
               "DocumentIndex": 2,
@@ -58,11 +76,12 @@
               "RelativeToolTip": "SkipdoorPathing\\Utilities\\SkipExclusionUtility.cs",
               "ViewState": "AgIAACQAAAAAAAAAAAAQwDoAAAANAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-17T22:09:24.578Z"
+              "WhenOpened": "2025-11-17T22:09:24.578Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 1,
               "Title": "HarmonyPatch_Pawn_SpawnSetup.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_SpawnSetup.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_SpawnSetup.cs",
@@ -70,7 +89,8 @@
               "RelativeToolTip": "SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_SpawnSetup.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAUAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-16T00:44:39.424Z"
+              "WhenOpened": "2025-11-16T00:44:39.424Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -80,14 +100,14 @@
               "RelativeDocumentMoniker": "SkipdoorPathing\\Utilities\\SkipdoorPathingUtil.cs",
               "ToolTip": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Utilities\\SkipdoorPathingUtil.cs",
               "RelativeToolTip": "SkipdoorPathing\\Utilities\\SkipdoorPathingUtil.cs",
-              "ViewState": "AgIAADkAAAAAAAAAAAAYwFgAAABYAAAAAAAAAA==",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAuwDMAAAAZAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-11-14T02:49:39.102Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
               "Title": "HarmonyPatch_Pawn_PathFollower_StartPath.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_PathFollower_StartPath.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_PathFollower_StartPath.cs",
@@ -95,12 +115,11 @@
               "RelativeToolTip": "SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_PathFollower_StartPath.cs",
               "ViewState": "AgIAAAwAAAAAAAAAAAAAAB0AAAA8AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-11-14T04:19:48.259Z",
-              "EditorCaption": ""
+              "WhenOpened": "2025-11-14T04:19:48.259Z"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 5,
               "Title": "JobPersistence.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Utilities\\JobPersistence.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Utilities\\JobPersistence.cs",
@@ -112,7 +131,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "ModMain.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\ModMain.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\ModMain.cs",
@@ -124,7 +143,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "HarmonyPatch_ToilsHaul_StartCarryThing.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Patches\\HarmonyPatch_ToilsHaul_StartCarryThing.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Patches\\HarmonyPatch_ToilsHaul_StartCarryThing.cs",
@@ -136,7 +155,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "HarmonyPatch_Pawn_Tick.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_Tick.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Patches\\HarmonyPatch_Pawn_Tick.cs",
@@ -148,7 +167,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "Settings.cs",
               "DocumentMoniker": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\RimWorld\\Mods\\SkipdoorPathing\\SkipdoorPathing\\SkipdoorPathing\\Settings.cs",
               "RelativeDocumentMoniker": "SkipdoorPathing\\Settings.cs",

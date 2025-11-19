@@ -40,7 +40,13 @@ namespace SkipdoorPathing
             {
                 if (c.InBounds(teleporter.Map) && c.Standable(teleporter.Map))
                 {
-                    return true;
+                    // Check for trees which are technically standable but block stopping
+                    bool hasTree = c.GetThingList(teleporter.Map).Any(t => t.def.category == ThingCategory.Plant && (t.def.plant?.IsTree ?? false));
+
+                    if (!hasTree)
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
