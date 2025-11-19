@@ -53,7 +53,9 @@ namespace SkipdoorPathing
             if (pawn.lord?.LordJob != null &&
                 (pawn.lord.LordJob is LordJob_Ritual || 
                 pawn.lord.LordJob is LordJob_FormAndSendCaravan ||
-                pawn.lord.LordJob is LordJob_BestowingCeremony))
+                pawn.lord.LordJob is LordJob_BestowingCeremony ||
+                pawn.lord.LordJob is LordJob_PsychicRitual ||
+                pawn.lord.LordJob is LordJob_PsychicRitualRepeating))
             {
                 return false;
             }

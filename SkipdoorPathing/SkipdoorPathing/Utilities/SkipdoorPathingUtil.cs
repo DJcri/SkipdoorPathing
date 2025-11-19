@@ -34,6 +34,18 @@ namespace SkipdoorPathing
             }
         }
 
+        private static bool HasEmptyAdjacentSpot(DoorTeleporter teleporter)
+        {
+            foreach (IntVec3 c in GenAdj.CellsAdjacent8Way(teleporter))
+            {
+                if (c.InBounds(teleporter.Map) && c.Standable(teleporter.Map))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static bool FindPathToTeleporter(Pawn pawn, LocalTargetInfo destination, PathEndMode peMode, out DoorTeleporter startTeleporter, out DoorTeleporter endTeleporter)
         {
             startTeleporter = null;
@@ -74,7 +86,7 @@ namespace SkipdoorPathing
             }
             foreach (DoorTeleporter endCandidate in mapTeleporters)
             {
-                if (endCandidate.DestroyedOrNull() || !pawn.Map.reachability.CanReach(endCandidate.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
+                if (endCandidate.DestroyedOrNull() || !HasEmptyAdjacentSpot(endCandidate) || !pawn.Map.reachability.CanReach(endCandidate.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
                 {
                     continue;
                 }
