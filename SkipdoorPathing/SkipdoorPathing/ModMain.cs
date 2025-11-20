@@ -40,16 +40,16 @@ namespace SkipdoorPathing
             // --- Guests ---
             listingStandard.CheckboxLabeled(
                 "Allow colony guests to use Skipdoors",
-                ref Settings.CanAnimalsUseSkipdoors,
+                ref Settings.CanGuestsUseSkipdoors,
                 "If enabled, colony guests will consider Skipdoors for pathing. Default is on."
             );
 
             listingStandard.Gap();
 
-            // --- Guests ---
+            // --- Slaves ---
             listingStandard.CheckboxLabeled(
                 "Allow colony slaves to use Skipdoors",
-                ref Settings.CanAnimalsUseSkipdoors,
+                ref Settings.CanSlavesUseSkipdoors,
                 "If enabled, colony slaves will consider Skipdoors for pathing. Default is on."
             );
 

@@ -8,6 +8,18 @@ namespace SkipdoorPathing
 {
     public static class SkipExclusionUtility
     {
+        // --- THROTTLING VARIABLES ---
+
+        // 1. Per-Pawn Throttle: Prevents a single pawn from spamming checks (e.g., getting stuck in a loop).
+        private static Dictionary<int, int> lastTeleportCheckTick = new Dictionary<int, int>();
+        private static int lastCacheCleanTick = 0;
+
+        // 2. Global Throttle: Prevents "Mass Pathing" lag (e.g., raid spawns, drafting 20 colonists).
+        // If more than this many checks happen in ONE tick, subsequent requests are ignored.
+        private const int MAX_CHECKS_PER_TICK = 10;
+        private static int checksProcessedThisTick = 0;
+        private static int lastGlobalCheckTick = -1;
+
         // Hardcoded list of major job types that should generally NOT use teleporters.
         // This includes animal production, sensitive interactions, and ceremony logic.
         // Users no longer need to know these specific defNames.
@@ -67,7 +79,41 @@ namespace SkipdoorPathing
                 return false;
             }
 
-            // 4. Job Analysis
+            // --- THROTTLE CHECKS (Prevent Lag Spikes) ---
+
+            int currentTick = Find.TickManager.TicksGame;
+
+            // 4a. Global Limit Check
+            if (!pawn.Drafted && checksProcessedThisTick >= MAX_CHECKS_PER_TICK)
+            {
+                // Too many calculations this tick already. Fall back to normal walking to save FPS.
+                return false;
+            }
+
+            // 4b. Per-Pawn Interval Check
+            if (lastTeleportCheckTick.TryGetValue(pawn.thingIDNumber, out int lastTick))
+            {
+                // Safety: If game reloaded (currentTick < lastTick), reset logic
+                if (currentTick >= lastTick && currentTick < lastTick + ModMain.TELEPORTER_CHECK_INTERVAL)
+                {
+                    return false;
+                }
+            }
+
+            // --- CACHE MAINTENANCE ---
+
+            // Mark this check as happening now
+            lastTeleportCheckTick[pawn.thingIDNumber] = currentTick;
+            checksProcessedThisTick++;
+
+            // Periodic cleanup (every ~1 hour of game time) to prevent dictionary bloating
+            if (currentTick > lastCacheCleanTick + 2500 || currentTick < lastCacheCleanTick)
+            {
+                lastTeleportCheckTick.Clear();
+                lastCacheCleanTick = currentTick;
+            }
+
+            // 5. Job Analysis
             if (pawn.jobs?.curJob != null)
             {
                 JobDef def = pawn.jobs.curJob.def;
