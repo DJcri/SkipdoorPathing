@@ -27,7 +27,7 @@ namespace SkipdoorPathing
             Scribe_Values.Look(ref CustomExclusions, "customExclusions", "");
 
             // Save new settings
-            Scribe_Values.Look(ref MinTripDistance, "minTripDistance", 10f);
+            Scribe_Values.Look(ref MinTripDistance, "minTripDistance", 20f);
             Scribe_Values.Look(ref MaxWalkToTeleporter, "maxWalkToTeleporter", 200f);
 
             base.ExposeData();
