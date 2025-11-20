@@ -11,12 +11,17 @@ namespace SkipdoorPathing
     [StaticConstructorOnStartup]
     public static class SkipdoorPathingUtil
     {
-        // Simple struct to hold path results to avoid recalculating
+        // --- THROTTLING CACHE ---
+        // Simple cache to prevent pawns from spamming checks (e.g. during combat micro)
+        // Key: Pawn ID, Value: Last GameTick checked
+        private static Dictionary<int, int> LastCheckTimes = new Dictionary<int, int>();
+        private const int CHECK_INTERVAL_TICKS = 60; // Check at most once per second per pawn
+
         private struct TeleporterPathResult
         {
             public DoorTeleporter Teleporter;
             public float Cost;
-            public PawnPath Path; // Ownership of this path must be managed carefully
+            public PawnPath Path;
         }
 
         public static void UseDoorTeleporter(Pawn pawn, DoorTeleporter startTeleporter, DoorTeleporter endTeleporter)
@@ -32,7 +37,6 @@ namespace SkipdoorPathing
             Job teleportJob = JobMaker.MakeJob(VEFDefOf.VEF_UseDoorTeleporter, startTeleporter);
             teleportJob.globalTarget = endTeleporter;
 
-            // Workaround for dropped items
             Thing carriedThing = pawn.carryTracker?.CarriedThing;
             bool manuallyPreserved = false;
 
@@ -47,13 +51,9 @@ namespace SkipdoorPathing
             if (manuallyPreserved && carriedThing != null)
             {
                 if (pawn.Spawned && !pawn.Dead && !pawn.Downed)
-                {
                     pawn.carryTracker.innerContainer.TryAdd(carriedThing);
-                }
                 else
-                {
                     GenSpawn.Spawn(carriedThing, pawn.Position, pawn.Map);
-                }
             }
 
             foreach (Pawn item in pawn?.Map?.mapPawns?.AllPawnsSpawned)
@@ -83,35 +83,37 @@ namespace SkipdoorPathing
             startTeleporter = null;
             endTeleporter = null;
 
+            // 1. Basic Validation
             if (pawn.DestroyedOrNull() || pawn.Map == null || WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.Count < 2)
-            {
                 return false;
-            }
 
-            // 1. Calculate Original Path Cost
-            // We need this as a baseline. If using a teleporter isn't faster than this, we abort.
-            PathFinder pathFinder = pawn.Map.pathFinder;
-            PawnPath originalPath = pathFinder.FindPathNow(pawn.Position, destination, pawn, null, peMode);
-
-            if (originalPath == null || originalPath == PawnPath.NotFound)
+            // 2. Throttling Check
+            // If we checked recently, don't check again. Saves performance during high-APM moments or job spam.
+            int currentTick = Find.TickManager.TicksGame;
+            if (LastCheckTimes.TryGetValue(pawn.thingIDNumber, out int lastTick))
             {
-                originalPath?.Dispose();
-                return false;
+                if (currentTick - lastTick < CHECK_INTERVAL_TICKS) return false;
             }
+            LastCheckTimes[pawn.thingIDNumber] = currentTick;
 
-            float bestTotalCost = originalPath.TotalCost;
-            originalPath.Dispose(); // We only needed the cost, not the nodes
+            // Periodic cleanup of the dictionary (simple approach)
+            if (currentTick % 2000 == 0 && LastCheckTimes.Count > 500) LastCheckTimes.Clear();
+
+            // 3. Min Distance Optimization
+            // If the trip is short, walking is always better/smoother.
+            float straightLineDist = (pawn.Position - destination.Cell).LengthManhattan;
+            if (straightLineDist < ModMain.Settings.MinTripDistance)
+                return false;
 
             List<DoorTeleporter> mapTeleporters = WorldComponent_DoorTeleporterManager.Instance.DoorTeleporters.Where(t => t.Map == pawn.Map).ToList();
             if (mapTeleporters.Count < 2) return false;
 
-            // 2. Identify Candidates
-            // Optimization: Split the loop. 
-            // Finding a path from Pawn -> StartTeleporter is independent of which EndTeleporter we choose.
-            // Finding a path from EndTeleporter -> Destination is independent of which StartTeleporter we choose.
-
+            PathFinder pathFinder = pawn.Map.pathFinder;
             List<TeleporterPathResult> validStarts = new List<TeleporterPathResult>();
             List<TeleporterPathResult> validEnds = new List<TeleporterPathResult>();
+
+            // Cache the settings for the loop
+            float maxWalk = ModMain.Settings.MaxWalkToTeleporter;
 
             try
             {
@@ -120,17 +122,19 @@ namespace SkipdoorPathing
                 {
                     if (t.DestroyedOrNull()) continue;
 
-                    // Heuristic check: If distance alone is greater than best cost, skip pathfinding
+                    // Optimization: Radius Cap
+                    // Don't calculate paths to doors that are too far away.
                     float dist = (pawn.Position - t.Position).LengthManhattan;
-                    if (dist > bestTotalCost) continue;
+                    if (dist > maxWalk) continue;
 
                     if (pawn.Map.reachability.CanReach(pawn.Position, t.Position, PathEndMode.Touch, TraverseMode.PassDoors, Danger.Deadly))
                     {
                         PawnPath p = pathFinder.FindPathNow(pawn.Position, t.Position, pawn);
                         if (p != null && p != PawnPath.NotFound)
                         {
-                            // Optimization: If path to teleporter is already worse than walking, discard
-                            if (p.TotalCost + ModMain.PENALTY_FOR_USING_TELEPORTER < bestTotalCost)
+                            // FIXED COST CALCULATION:
+                            // PathCost is roughly 13 per tile. Multiplying by 18 allows for snow/terrain overhead.
+                            if (p.TotalCost <= maxWalk * 18)
                             {
                                 validStarts.Add(new TeleporterPathResult { Teleporter = t, Cost = p.TotalCost, Path = p });
                             }
@@ -142,7 +146,6 @@ namespace SkipdoorPathing
                     }
                 }
 
-                // If no valid starts, abort early
                 if (validStarts.Count == 0) return false;
 
                 // --- B. Analyze End Teleporters ---
@@ -150,16 +153,17 @@ namespace SkipdoorPathing
                 {
                     if (t.DestroyedOrNull() || !HasEmptyAdjacentSpot(t)) continue;
 
-                    // Heuristic check
+                    // Optimization: Radius Cap
                     float dist = (t.Position - destination.Cell).LengthManhattan;
-                    if (dist > bestTotalCost) continue;
+                    if (dist > maxWalk) continue;
 
                     if (pawn.Map.reachability.CanReach(t.Position, destination, peMode, TraverseMode.PassDoors, Danger.Deadly))
                     {
                         PawnPath p = pathFinder.FindPathNow(t.Position, destination, pawn, null, peMode);
                         if (p != null && p != PawnPath.NotFound)
                         {
-                            if (p.TotalCost < bestTotalCost)
+                            // FIXED COST CALCULATION
+                            if (p.TotalCost <= maxWalk * 18)
                             {
                                 validEnds.Add(new TeleporterPathResult { Teleporter = t, Cost = p.TotalCost, Path = p });
                             }
@@ -173,36 +177,58 @@ namespace SkipdoorPathing
 
                 if (validEnds.Count == 0) return false;
 
-                // --- C. Find Best Combination ---
-                // Loop through valid starts and ends to find the best combo.
-                // This is fast because we are just adding floats, not pathfinding.
-
-                bool foundBetterPath = false;
+                // --- C. Find Best Teleporter Combination ---
+                float bestTeleporterCost = float.MaxValue;
+                bool foundCandidate = false;
 
                 foreach (var start in validStarts)
                 {
                     foreach (var end in validEnds)
                     {
-                        // Cannot teleport to the same door
                         if (start.Teleporter == end.Teleporter) continue;
 
                         float totalCost = start.Cost + end.Cost + ModMain.PENALTY_FOR_USING_TELEPORTER;
 
-                        if (totalCost < bestTotalCost)
+                        if (totalCost < bestTeleporterCost)
                         {
-                            bestTotalCost = totalCost;
+                            bestTeleporterCost = totalCost;
                             startTeleporter = start.Teleporter;
                             endTeleporter = end.Teleporter;
-                            foundBetterPath = true;
+                            foundCandidate = true;
                         }
                     }
                 }
 
-                return foundBetterPath;
+                if (!foundCandidate) return false;
+
+                // --- D. LAZY BASELINE CHECK ---
+                // "Is teleporting faster than flying?"
+                // If the total cost to teleport is less than the straight-line distance to the goal,
+                // it is MATHEMATICALLY IMPOSSIBLE for walking to be faster.
+                // In this case, we return TRUE immediately and skip the expensive OriginalPath calculation.
+                if (bestTeleporterCost < straightLineDist)
+                {
+                    return true;
+                }
+
+                // --- E. Fallback Baseline Check ---
+                // If we are here, the teleporter path is decent, but maybe walking is still better 
+                // because the teleporter path involves some walking. Now we MUST pay the cost to check the walk path.
+                PawnPath originalPath = pathFinder.FindPathNow(pawn.Position, destination, pawn, null, peMode);
+                if (originalPath == null || originalPath == PawnPath.NotFound)
+                {
+                    originalPath?.Dispose();
+                    // If we can't walk there, but we found a teleporter path (validEnds checks reachability), take the teleporter!
+                    return true;
+                }
+
+                float walkCost = originalPath.TotalCost;
+                originalPath.Dispose();
+
+                return bestTeleporterCost < walkCost;
             }
             finally
             {
-                // CLEANUP: We must dispose of all paths we generated
                 foreach (var res in validStarts) res.Path?.Dispose();
                 foreach (var res in validEnds) res.Path?.Dispose();
             }

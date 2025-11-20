@@ -11,6 +11,10 @@ namespace SkipdoorPathing
         public bool ExcludeWanderJobs = true;
         public string CustomExclusions = "";
 
+        // --- NEW OPTIMIZATION SETTINGS ---
+        public float MinTripDistance = 20f;      // If trip is shorter than this, don't bother checking teleporters
+        public float MaxWalkToTeleporter = 200f;  // If teleporter is further than this from pawn/dest, ignore it
+
         // Runtime cache (not saved to file)
         public HashSet<string> CachedExclusions = new HashSet<string>();
 
@@ -21,6 +25,10 @@ namespace SkipdoorPathing
             Scribe_Values.Look(ref CanSlavesUseSkipdoors, "canSlavesUseSkipdoors", true);
             Scribe_Values.Look(ref ExcludeWanderJobs, "excludeWanderJobs", true);
             Scribe_Values.Look(ref CustomExclusions, "customExclusions", "");
+
+            // Save new settings
+            Scribe_Values.Look(ref MinTripDistance, "minTripDistance", 10f);
+            Scribe_Values.Look(ref MaxWalkToTeleporter, "maxWalkToTeleporter", 200f);
 
             base.ExposeData();
         }

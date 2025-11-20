@@ -7,7 +7,9 @@ namespace SkipdoorPathing
     public class ModMain : Mod
     {
         public static readonly float PENALTY_FOR_USING_TELEPORTER = 50f;
-        public static readonly int TELEPORTER_CHECK_INTERVAL = 60;
+
+        // Removed static interval constant, handling this via Settings now if needed, 
+        // but sticking to Logic Throttling in Utility.
 
         public static ModMain Instance;
         public static Harmony harmony;
@@ -20,7 +22,7 @@ namespace SkipdoorPathing
             Instance = this;
 
             Settings = GetSettings<Settings>();
-            Settings.UpdateCache(); // Initialize cache on load
+            Settings.UpdateCache();
         }
 
         public override void DoSettingsWindowContents(Rect inRect)
@@ -59,10 +61,23 @@ namespace SkipdoorPathing
             listingStandard.CheckboxLabeled(
                 "Exclude Wandering Jobs",
                 ref Settings.ExcludeWanderJobs,
-                "If enabled, pawns will not use skipdoors for low-priority wandering behaviors (e.g. GotoWander, Wait_Wander). Keeps them from teleporting randomly while idle."
+                "If enabled, pawns will not use skipdoors for low-priority wandering behaviors."
             );
 
+            listingStandard.GapLine();
+
+            // --- OPTIMIZATIONS ---
+            listingStandard.Label($"Minimum Trip Distance: {Settings.MinTripDistance}");
+            Settings.MinTripDistance = listingStandard.Slider(Settings.MinTripDistance, 0f, 200f);
+            listingStandard.Label("If the destination is closer than this, skipdoors are ignored.");
+
             listingStandard.Gap();
+
+            listingStandard.Label($"Max Walk Distance to Door: {Settings.MaxWalkToTeleporter}");
+            Settings.MaxWalkToTeleporter = listingStandard.Slider(Settings.MaxWalkToTeleporter, 10f, 200f);
+            listingStandard.Label("Pawns won't consider walking further than this to reach a skipdoor.");
+
+            listingStandard.GapLine();
 
             // --- Custom Exclusions ---
             listingStandard.Label("Custom JobDef Exclusions (Comma separated defNames):");
@@ -70,7 +85,7 @@ namespace SkipdoorPathing
             if (text != Settings.CustomExclusions)
             {
                 Settings.CustomExclusions = text;
-                Settings.UpdateCache(); // Update cache immediately when typing stops/changes
+                Settings.UpdateCache();
             }
             listingStandard.Label("Example: LayEgg, Shear, RopeToPen");
 
