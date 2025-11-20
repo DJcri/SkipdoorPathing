@@ -19,7 +19,6 @@ namespace SkipdoorPathing
             var type = AccessTools.TypeByName("VEF.Buildings.DoorTeleporter");
             if (type == null)
             {
-                Log.Error("[DoorTeleporter_PatchInitializer] Failed to find target type 'VEF.Buildings.DoorTeleporter'.");
                 return;
             }
 
@@ -27,15 +26,12 @@ namespace SkipdoorPathing
             var originalMethod = AccessTools.Method(type, "Teleport", new[] { typeof(Thing), typeof(Map), typeof(IntVec3) });
             if (originalMethod == null)
             {
-                Log.Error($"[DoorTeleporter_PatchInitializer] Failed to find 'Teleport' method in '{type.FullName}'.");
                 return;
             }
 
             // 3. Apply the patch.
             var transpilerMethod = AccessTools.Method(typeof(DoorTeleporter_Teleport_Logic), nameof(DoorTeleporter_Teleport_Logic.Transpiler));
             harmony.Patch(originalMethod, transpiler: new HarmonyMethod(transpilerMethod));
-
-            Log.Message($"[DoorTeleporter_PatchInitializer] Patched {originalMethod.FullDescription()}");
         }
     }
 
@@ -88,7 +84,6 @@ namespace SkipdoorPathing
 
             if (carryTrackerField == null || teleportEffectersField == null || spawnMethod == null)
             {
-                Log.Error("[DoorTeleporter_Transpiler] Failed to find required fields/methods (carryTracker, teleportEffecters, or GenSpawn.Spawn).");
                 yield return (CodeInstruction)instructions;
             }
 
@@ -97,7 +92,6 @@ namespace SkipdoorPathing
 
             if (carryTrackerAccessIndex == -1)
             {
-                Log.Error("[DoorTeleporter_Transpiler] Failed to find carryTracker access.");
                 yield return (CodeInstruction)instructions;
             }
 
@@ -128,7 +122,6 @@ namespace SkipdoorPathing
 
             if (endAnchorIndex == -1)
             {
-                Log.Error("[DoorTeleporter_Transpiler] Failed to find teleportEffecters access at end of method.");
                 yield return (CodeInstruction)instructions;
             }
 

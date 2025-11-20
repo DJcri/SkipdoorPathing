@@ -129,8 +129,6 @@ namespace SkipdoorPathing
 
                 // Also clear the completion flag if it was set (though usually handled by the patch)
                 shouldReapplyMoveAfterJobCompletion.Remove(pawn);
-
-                Log.Message($"Reapplied saved move order for {pawn.NameShortColored} to cell: {targetCell}");
                 return true;
             }
             else
