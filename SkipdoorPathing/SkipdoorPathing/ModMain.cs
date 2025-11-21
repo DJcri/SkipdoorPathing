@@ -68,13 +68,13 @@ namespace SkipdoorPathing
 
             // --- OPTIMIZATIONS ---
             listingStandard.Label($"Minimum Trip Distance: {Settings.MinTripDistance}");
-            Settings.MinTripDistance = listingStandard.Slider(Settings.MinTripDistance, 0f, 200f);
+            Settings.MinTripDistance = listingStandard.Slider(Settings.MinTripDistance, 0f, 40f);
             listingStandard.Label("If the destination is closer than this, skipdoors are ignored.");
 
             listingStandard.Gap();
 
             listingStandard.Label($"Max Walk Distance to Door: {Settings.MaxWalkToTeleporter}");
-            Settings.MaxWalkToTeleporter = listingStandard.Slider(Settings.MaxWalkToTeleporter, 10f, 200f);
+            Settings.MaxWalkToTeleporter = listingStandard.Slider(Settings.MaxWalkToTeleporter, 200f, 400f);
             listingStandard.Label("Pawns won't consider walking further than this to reach a skipdoor.");
 
             listingStandard.GapLine();
