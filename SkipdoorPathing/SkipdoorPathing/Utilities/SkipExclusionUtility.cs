@@ -81,11 +81,11 @@ namespace SkipdoorPathing
                 if (ModMain.Settings.ExcludeWanderJobs)
                 {
                     if (pawn?.jobs?.curJob != null &&
-                        (pawn.jobs.curJob.def.Equals(VEFDefOf.VEF_UseDoorTeleporter) ||
-                        (pawn.jobs.curJob.def.Equals(JobDefOf.HaulToTransporter) && pawn.jobs.curJob.targetA.Thing is Pawn carriedThing) ||
+                        pawn.jobs.curJob.def.Equals(VEFDefOf.VEF_UseDoorTeleporter) ||
+                        pawn.jobs.curJob.def.Equals(JobDefOf.HaulToTransporter) ||
                         pawn.jobs.curJob.def.Equals(JobDefOf.GotoWander) ||
                         pawn.jobs.curJob.def.Equals(JobDefOf.RevenantWander) ||
-                        pawn.jobs.curJob.def.Equals(JobDefOf.Wait_Wander)))
+                        pawn.jobs.curJob.def.Equals(JobDefOf.Wait_Wander))
                     {
                         return false;
                     }
