@@ -34,6 +34,12 @@ namespace SkipdoorPathing
             // "SpectateCeremony",
             "GiveSpeech",
             "BestowingCeremony",
+            "LoadVehicle",
+            "CarryItemToVehicle",
+            "PrepareCaravan_GatheringVehicle",
+            "RopeAnimalToVehicle",
+            "CarryPawnToVehicle",
+            "LoadUpgradeMaterials"
         };
 
         public static bool ShouldSkipdoor(this Pawn pawn)
@@ -46,11 +52,10 @@ namespace SkipdoorPathing
             }
 
             // 1.5 Guest Check
-            if (pawn.HomeFaction != null && !pawn.HomeFaction.Equals(Faction.OfPlayer) ||
-                (pawn.GuestStatus != null &&
+            if (pawn.GuestStatus != null &&
                 pawn.GuestStatus.Equals(GuestStatus.Guest) && !ModMain.Settings.CanGuestsUseSkipdoors &&
                 pawn.GuestStatus.Equals(GuestStatus.Slave) && !ModMain.Settings.CanSlavesUseSkipdoors &&
-                pawn.GuestStatus.Equals(GuestStatus.Prisoner)))
+                pawn.GuestStatus.Equals(GuestStatus.Prisoner))
             {
                 return false;
             }
