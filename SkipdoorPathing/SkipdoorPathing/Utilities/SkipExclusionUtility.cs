@@ -1,4 +1,5 @@
 ﻿using RimWorld;
+using System;
 using System.Collections.Generic;
 using VEF;
 using Verse;
@@ -8,9 +9,7 @@ namespace SkipdoorPathing
 {
     public static class SkipExclusionUtility
     {
-        // Hardcoded list of major job types that should generally NOT use teleporters.
-        // This includes animal production, sensitive interactions, and ceremony logic.
-        // Users no longer need to know these specific defNames.
+        // Behavioral job exclusions (non-logistical)
         private static readonly HashSet<string> DefaultExcludedJobs = new HashSet<string>
         {
             // --- Animal Actions ---
@@ -45,71 +44,146 @@ namespace SkipdoorPathing
         public static bool ShouldSkipdoor(this Pawn pawn)
         {
             // 1. Faction Check
-            if (pawn.Faction == null || (pawn.Faction != null &&
-                !pawn.Faction.Equals(Faction.OfPlayer)))
-            {
+            if (pawn.Faction == null || pawn.Faction != Faction.OfPlayer)
                 return false;
-            }
 
-            // 1.5 Guest Check
-            if (pawn.GuestStatus != null &&
-                pawn.GuestStatus.Equals(GuestStatus.Guest) && !ModMain.Settings.CanGuestsUseSkipdoors &&
-                pawn.GuestStatus.Equals(GuestStatus.Slave) && !ModMain.Settings.CanSlavesUseSkipdoors &&
-                pawn.GuestStatus.Equals(GuestStatus.Prisoner))
+            // 1.5 Guest / Prisoner / Slave Check
+            if (pawn.GuestStatus != null)
             {
-                return false;
+                if (pawn.GuestStatus == GuestStatus.Guest && !ModMain.Settings.CanGuestsUseSkipdoors)
+                    return false;
+
+                if (pawn.GuestStatus == GuestStatus.Slave && !ModMain.Settings.CanSlavesUseSkipdoors)
+                    return false;
+
+                if (pawn.GuestStatus == GuestStatus.Prisoner)
+                    return false;
             }
 
             // 2. Animal Settings Check
-            if (pawn.RaceProps.Animal && ModMain.Settings != null && !ModMain.Settings.CanAnimalsUseSkipdoors)
+            if (pawn.RaceProps.Animal &&
+                ModMain.Settings != null &&
+                !ModMain.Settings.CanAnimalsUseSkipdoors)
             {
                 return false;
             }
 
-            // 3. Roping Check (Redundant with job check but faster/safer)
-            if (pawn.roping != null && (pawn.roping.IsRoped || pawn.roping.Ropees.Count > 0))
+            // 3. Roping Check (fast hard stop)
+            if (pawn.roping != null &&
+                (pawn.roping.IsRoped || pawn.roping.Ropees.Count > 0))
             {
                 return false;
             }
 
-            // 5. Job Analysis
-            if (pawn.jobs?.curJob != null)
+            // 4. Job Analysis
+            Job job = pawn.jobs?.curJob;
+            if (job != null)
             {
-                JobDef def = pawn.jobs.curJob.def;
-                string defName = def.defName;
+                JobDef def = job.def;
 
-                // A. Critical Mechanics (Infinite Loop / Logic Break Prevention)
-                if (def == VEFDefOf.VEF_UseDoorTeleporter) return false;
-                if (def == JobDefOf.HaulToTransporter && pawn.jobs.curJob.targetA.Thing is Pawn) return false;
+                // A. Skipdoor recursion / logic safety
+                if (def == VEFDefOf.VEF_UseDoorTeleporter)
+                    return false;
 
-                // B. Wandering Checks
+                // B. Transport / vehicle / shuttle loading (automatic detection)
+                if (JobTargetsTransporter(job))
+                    return false;
+
+                // C. Actively carrying something for transport logic
+                if (pawn.carryTracker?.CarriedThing != null &&
+                    IsTransportDriver(def))
+                {
+                    return false;
+                }
+
+                // D. Wander jobs (user setting)
                 if (ModMain.Settings.ExcludeWanderJobs)
                 {
-                    if (pawn?.jobs?.curJob != null &&
-                        pawn.jobs.curJob.def.Equals(VEFDefOf.VEF_UseDoorTeleporter) ||
-                        pawn.jobs.curJob.def.Equals(JobDefOf.HaulToTransporter) ||
-                        pawn.jobs.curJob.def.Equals(JobDefOf.GotoWander) ||
-                        pawn.jobs.curJob.def.Equals(JobDefOf.RevenantWander) ||
-                        pawn.jobs.curJob.def.Equals(JobDefOf.Wait_Wander))
+                    if (def == JobDefOf.GotoWander ||
+                        def == JobDefOf.Wait_Wander ||
+                        def == JobDefOf.RevenantWander)
                     {
                         return false;
                     }
                 }
 
-                // C. Major Job Type List (Default Exclusions)
-                if (DefaultExcludedJobs.Contains(defName))
+                // E. Ritual jobs
+                if (JobIsRitual(pawn) || JobDriverIsRitual(job))
                 {
-                    return false;
+                    return false; // Skipdoors are disabled for rituals
                 }
 
-                // D. User Custom Exclusions (From Settings)
-                if (ModMain.Settings.CachedExclusions.Contains(defName))
-                {
+                // F. Behavioral job exclusions
+                if (DefaultExcludedJobs.Contains(def.defName))
                     return false;
-                }
+
+                // G. User custom exclusions
+                if (ModMain.Settings.CachedExclusions.Contains(def.defName))
+                    return false;
             }
 
             return true;
+        }
+
+        // -------------------------
+        // Helper Methods
+        // -------------------------
+
+        private static bool JobIsRitual(Pawn pawn)
+        {
+            if (pawn?.lord?.LordJob == null) return false;
+
+            // Check if the LordJob is a ritual
+            var lordJob = pawn.lord.LordJob;
+
+            // RimWorld vanilla ritual jobs include:
+            // LordJob_Ritual, LordJob_WeddingCeremony, LordJob_BestowingCeremony
+            string name = lordJob.GetType().Name;
+
+            return name.Contains("Ritual") ||
+                   name.Contains("Wedding") ||
+                   name.Contains("Bestowing");
+        }
+
+        private static bool JobDriverIsRitual(Job job)
+        {
+            if (job?.def?.driverClass == null) return false;
+
+            string driverName = job.def.driverClass.Name;
+            return driverName.Contains("Ritual") || driverName.Contains("Ceremony");
+        }
+
+        private static bool JobTargetsTransporter(Job job)
+        {
+            if (job == null) return false;
+
+            return
+                IsTransporter(job.targetA.Thing) ||
+                IsTransporter(job.targetB.Thing) ||
+                IsTransporter(job.targetC.Thing);
+        }
+
+        private static bool IsTransporter(Thing thing)
+        {
+            if (thing == null) return false;
+
+            return
+                thing.TryGetComp<CompTransporter>() != null || // Vanilla
+                thing.TryGetComp<CompShuttle>() != null; // Royalty
+        }
+
+        private static bool IsTransportDriver(JobDef def)
+        {
+            if (def?.driverClass == null)
+                return false;
+
+            Type driver = def.driverClass;
+
+            return
+                driver == typeof(JobDriver_HaulToTransporter) ||
+                driver.Name.Contains("Transport") ||
+                driver.Name.Contains("Load") ||
+                driver.Name.Contains("ToVehicle");
         }
     }
 }

@@ -67,14 +67,23 @@ namespace SkipdoorPathing
 
         private static bool HasEmptyAdjacentSpot(DoorTeleporter teleporter)
         {
+            Map map = teleporter.Map;
+            if (map == null) return false;
+
             foreach (IntVec3 c in GenAdj.CellsAdjacent8Way(teleporter))
             {
-                if (c.InBounds(teleporter.Map) && c.Standable(teleporter.Map))
-                {
-                    bool hasTree = c.GetThingList(teleporter.Map).Any(t => t.def.category == ThingCategory.Plant && (t.def.plant?.IsTree ?? false));
-                    if (!hasTree) return true;
-                }
+                if (!c.InBounds(map) || !c.Standable(map))
+                    continue;
+
+                bool blocked = c.GetThingList(map).Any(t =>
+                    t.def.passability == Traversability.Impassable ||
+                    t.def.passability == Traversability.PassThroughOnly
+                );
+
+                if (!blocked)
+                    return true;
             }
+
             return false;
         }
 
