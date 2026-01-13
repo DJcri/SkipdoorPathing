@@ -62,11 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Patches\HarmonyPatch_DoorTeleporter_Teleport.cs" />
-    <Compile Include="Patches\HarmonyPatch_Pawn_PathFollower_StartPath.cs" />
+    <Compile Include="Patches\HarmonyPatch_Pawn_PathFollower.cs" />
     <Compile Include="ModMain.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="Utilities\PawnCarryManager.cs" />
-    <Compile Include="Utilities\PawnOrderManager.cs" />
+    <Compile Include="Utilities\SkipdoorTransitManager.cs" />
     <Compile Include="Utilities\SkipExclusionUtility.cs" />
     <Compile Include="Utilities\SkipdoorPathingUtil.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

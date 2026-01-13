@@ -34,11 +34,11 @@ namespace SkipdoorPathing
             "GiveSpeech",
             "BestowingCeremony",
             "LoadVehicle",
-            "CarryItemToVehicle",
-            "PrepareCaravan_GatheringVehicle",
+            // "CarryItemToVehicle",
+            // "PrepareCaravan_GatheringVehicle",
             "RopeAnimalToVehicle",
-            "CarryPawnToVehicle",
-            "LoadUpgradeMaterials"
+            // "CarryPawnToVehicle",
+            // "LoadUpgradeMaterials"
         };
 
         public static bool ShouldSkipdoor(this Pawn pawn)
@@ -85,18 +85,7 @@ namespace SkipdoorPathing
                 if (def == VEFDefOf.VEF_UseDoorTeleporter)
                     return false;
 
-                // B. Transport / vehicle / shuttle loading (automatic detection)
-                if (JobTargetsTransporter(job))
-                    return false;
-
-                // C. Actively carrying something for transport logic
-                if (pawn.carryTracker?.CarriedThing != null &&
-                    IsTransportDriver(def))
-                {
-                    return false;
-                }
-
-                // D. Wander jobs (user setting)
+                // B. Wander jobs (user setting)
                 if (ModMain.Settings.ExcludeWanderJobs)
                 {
                     if (def == JobDefOf.GotoWander ||
@@ -107,17 +96,17 @@ namespace SkipdoorPathing
                     }
                 }
 
-                // E. Ritual jobs
+                // C. Ritual jobs
                 if (JobIsRitual(pawn) || JobDriverIsRitual(job))
                 {
                     return false; // Skipdoors are disabled for rituals
                 }
 
-                // F. Behavioral job exclusions
+                // D. Behavioral job exclusions
                 if (DefaultExcludedJobs.Contains(def.defName))
                     return false;
 
-                // G. User custom exclusions
+                // E. User custom exclusions
                 if (ModMain.Settings.CachedExclusions.Contains(def.defName))
                     return false;
             }
@@ -151,39 +140,6 @@ namespace SkipdoorPathing
 
             string driverName = job.def.driverClass.Name;
             return driverName.Contains("Ritual") || driverName.Contains("Ceremony");
-        }
-
-        private static bool JobTargetsTransporter(Job job)
-        {
-            if (job == null) return false;
-
-            return
-                IsTransporter(job.targetA.Thing) ||
-                IsTransporter(job.targetB.Thing) ||
-                IsTransporter(job.targetC.Thing);
-        }
-
-        private static bool IsTransporter(Thing thing)
-        {
-            if (thing == null) return false;
-
-            return
-                thing.TryGetComp<CompTransporter>() != null || // Vanilla
-                thing.TryGetComp<CompShuttle>() != null; // Royalty
-        }
-
-        private static bool IsTransportDriver(JobDef def)
-        {
-            if (def?.driverClass == null)
-                return false;
-
-            Type driver = def.driverClass;
-
-            return
-                driver == typeof(JobDriver_HaulToTransporter) ||
-                driver.Name.Contains("Transport") ||
-                driver.Name.Contains("Load") ||
-                driver.Name.Contains("ToVehicle");
         }
     }
 }
