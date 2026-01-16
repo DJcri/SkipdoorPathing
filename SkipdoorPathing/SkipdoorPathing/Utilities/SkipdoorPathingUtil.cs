@@ -28,8 +28,8 @@ namespace SkipdoorPathing
         private static readonly Dictionary<int, PawnDecisionCache> DecisionCache = new Dictionary<int, PawnDecisionCache>(512);
 
         private const int CHECK_INTERVAL_TICKS = 60; // at most once per second per pawn
-        private const int MAX_START_CANDIDATES = 8; // shortlist cap (keeps behavior similar while reducing path calls)
-        private const int MAX_END_CANDIDATES = 8;
+        private const int MAX_START_CANDIDATES = 3; // shortlist cap (keeps behavior similar while reducing path calls)
+        private const int MAX_END_CANDIDATES = 3;
 
         public static void UseDoorTeleporter(Pawn pawn, DoorTeleporter startTeleporter, DoorTeleporter endTeleporter)
         {

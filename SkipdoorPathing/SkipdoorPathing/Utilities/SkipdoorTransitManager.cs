@@ -1,7 +1,6 @@
 ﻿using HarmonyLib;
 using RimWorld;
 using System.Collections.Generic;
-using System.Linq;
 using VEF.Buildings;
 using Verse;
 using Verse.AI;
@@ -10,6 +9,13 @@ namespace SkipdoorPathing
 {
     public class SkipdoorTransitManager : MapComponent
     {
+        // --- plan cleanup knobs ---
+        private const int PLAN_TTL_TICKS = 900;              // 15 seconds at 60 TPS
+        private const int TRANSIT_TTL_TICKS = 120;           // 2 seconds (transit is 15 ticks; this is a safety net)
+        private const int UNREACHABLE_RECHECK_INTERVAL = 60; // once per second
+
+        // Avoid per-tick allocations in MapComponentTick
+        private readonly List<Pawn> tmpPawns = new List<Pawn>(128);
         private List<SavedPlan> savedPlans;
 
         public override void ExposeData()
@@ -65,6 +71,7 @@ namespace SkipdoorPathing
             public int createdTick;
             public int draftedLockUntilTick;
             public bool inTransit;
+            public int transitStartTick;
             public int transitTicksLeft;
             public IntVec3 transitTargetCell;
         }
@@ -83,8 +90,9 @@ namespace SkipdoorPathing
             public int createdTick;
             public int draftedLockUntilTick;
 
-            // Transit state (if you add it)
+            // Transit state
             public bool inTransit;
+            public int transitStartTick;
             public int transitTicksLeft;
             public IntVec3 transitTargetCell;
 
@@ -102,6 +110,7 @@ namespace SkipdoorPathing
                 draftedLockUntilTick = p.draftedLockUntilTick;
 
                 inTransit = p.inTransit;
+                transitStartTick = p.transitStartTick;
                 transitTicksLeft = p.transitTicksLeft;
                 transitTargetCell = p.transitTargetCell;
             }
@@ -119,6 +128,7 @@ namespace SkipdoorPathing
                     draftedLockUntilTick = draftedLockUntilTick,
 
                     inTransit = inTransit,
+                    transitStartTick = transitStartTick,
                     transitTicksLeft = transitTicksLeft,
                     transitTargetCell = transitTargetCell
                 };
@@ -138,6 +148,7 @@ namespace SkipdoorPathing
                 Scribe_Values.Look(ref draftedLockUntilTick, "draftedLockUntilTick");
 
                 Scribe_Values.Look(ref inTransit, "inTransit");
+                Scribe_Values.Look(ref transitStartTick, "transitStartTick");
                 Scribe_Values.Look(ref transitTicksLeft, "transitTicksLeft");
                 Scribe_Values.Look(ref transitTargetCell, "transitTargetCell");
             }
@@ -198,6 +209,26 @@ namespace SkipdoorPathing
             if (!TryGetPlanInternal(pawn, out Plan plan))
                 return false;
 
+            int now = Find.TickManager.TicksGame;
+
+            // Expire stale plans that never start transit (prevents infinite lingering plans)
+            if (!plan.inTransit && plan.createdTick > 0 && now - plan.createdTick > PLAN_TTL_TICKS)
+            {
+                ClearPlan(pawn);
+                return false;
+            }
+
+            // If pawn can no longer reach the entry cell, cancel the plan (check at most once/sec)
+            if (!plan.inTransit && (now % UNREACHABLE_RECHECK_INTERVAL == 0))
+            {
+                if (!map.reachability.CanReach(pawn.Position, plan.entryCell, PathEndMode.OnCell,
+                        TraverseMode.PassDoors, Danger.Deadly))
+                {
+                    ClearPlan(pawn);
+                    return false;
+                }
+            }
+
             entry = plan.entry;
             exit = plan.exit;
             finalDest = plan.finalDest;
@@ -235,28 +266,42 @@ namespace SkipdoorPathing
         public override void MapComponentTick()
         {
             base.MapComponentTick();
+            int now = Find.TickManager.TicksGame;
 
             // Existing cleanup cadence...
-            if (Find.TickManager.TicksGame % 250 == 0)
+            if (now % 250 == 0)
             {
-                var toRemove = new List<Pawn>();
+                tmpPawns.Clear();
                 foreach (var kv in plans)
                 {
                     var pawn = kv.Key;
-                    if (pawn.DestroyedOrNull() || pawn.Map != map || !pawn.Spawned) toRemove.Add(pawn);
+                    if (pawn.DestroyedOrNull() || pawn.Map != map || !pawn.Spawned || pawn.Dead)
+                            tmpPawns.Add(pawn);
                 }
-                foreach (var p in toRemove) plans.Remove(p);
+                for (int i = 0; i < tmpPawns.Count; i++)
+                    plans.Remove(tmpPawns[i]);
             }
 
             // NEW: process in-transit teleports each tick
             if (plans.Count == 0) return;
 
             // Copy keys to avoid collection modification issues
-            var pawns = plans.Keys.ToList();
-            foreach (var pawn in pawns)
+            tmpPawns.Clear();
+            foreach (var kv in plans)
+                tmpPawns.Add(kv.Key);
+
+            for (int i = 0; i < tmpPawns.Count; i++)
             {
+                Pawn pawn = tmpPawns[i];
                 if (!TryGetPlanInternal(pawn, out var plan)) continue;
                 if (!plan.inTransit) continue;
+
+                // If something goes wrong and transit never completes, don't keep it forever.
+                if (plan.transitStartTick > 0 && now - plan.transitStartTick > TRANSIT_TTL_TICKS)
+                {
+                    ClearPlan(pawn);
+                    continue;
+                }
 
                 // Defensive validity
                 if (plan.entry.DestroyedOrNull() || plan.exit.DestroyedOrNull() || pawn.DestroyedOrNull() || pawn.Map != map)
@@ -302,21 +347,22 @@ namespace SkipdoorPathing
                     }
                     else
                     {
-                        // Avoid "pathing to destroyed thing" red errors (finalDest can be a Thing that vanished mid-transit)
-                        if (plan.finalDest.IsValid)
-                        {
-                            if (plan.finalDest.HasThing)
-                            {
-                                Thing t = plan.finalDest.Thing;
-                                if (t == null || t.DestroyedOrNull())
-                                {
-                                    // Let vanilla/jobdriver re-resolve next tick instead of forcing a bad path.
-                                    return;
-                                }
-                            }
+                        if (!plan.finalDest.IsValid)
+                            continue;
 
-                            pawn.pather?.StartPath(plan.finalDest, plan.finalPeMode);
+                        // If destination is a cell, ensure it's in bounds on the current map
+                        if (!plan.finalDest.HasThing && plan.finalDest.Cell.IsValid && !plan.finalDest.Cell.InBounds(pawn.Map))
+                            continue;
+
+                        // If destination is a thing, ensure it still exists
+                        if (plan.finalDest.HasThing)
+                        {
+                            Thing t = plan.finalDest.Thing;
+                            if (t == null || t.DestroyedOrNull())
+                                continue;
                         }
+
+                        pawn.pather?.StartPath(plan.finalDest, plan.finalPeMode);
                     }
                 }
                 else
@@ -329,6 +375,8 @@ namespace SkipdoorPathing
 
         public bool TryExecuteTeleportIfAtEntry(Pawn pawn)
         {
+            int now = Find.TickManager.TicksGame;
+
             if (!TryGetPlanInternal(pawn, out Plan plan))
                 return false;
 
@@ -336,19 +384,38 @@ namespace SkipdoorPathing
             if (plan.inTransit)
                 return false;
 
+            
+            // entry unreachable (check once/sec)
+            if (!plan.inTransit && (now % UNREACHABLE_RECHECK_INTERVAL == 0))
+            {
+                if (!map.reachability.CanReach(pawn.Position, plan.entryCell, PathEndMode.OnCell,
+                        TraverseMode.PassDoors, Danger.Deadly))
+                {
+                    ClearPlan(pawn);
+                    return false;
+                }
+            }
+
             if (pawn.Position != plan.entryCell)
                 return false;
+
+            // expire stale plans
+            if (!plan.inTransit && plan.createdTick > 0 && now - plan.createdTick > PLAN_TTL_TICKS)
+            {
+                ClearPlan(pawn);
+                return false;
+            }
 
             pawn.pather?.StopDead();
             pawn.stances?.CancelBusyStanceSoft();
 
             // Start a 15-tick VPE-like countdown (matches Skipdoor.DoTeleportEffects)
             plan.inTransit = true;
+            plan.transitStartTick = now;
             plan.transitTicksLeft = 15;
             plan.transitTargetCell = plan.exit.InteractionCell; // will be adjusted by DoTeleportEffects at tick 15
 
-            plans[pawn] = plan; // IMPORTANT: write back
-
+            plans[pawn] = plan; // write back once
             return true;
         }
     }
