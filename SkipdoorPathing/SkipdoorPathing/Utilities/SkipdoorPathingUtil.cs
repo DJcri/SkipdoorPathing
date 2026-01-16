@@ -1,5 +1,6 @@
 ﻿using RimWorld;
 using System.Collections.Generic;
+using UnityEngine;
 using VEF;
 using VEF.Buildings;
 using Verse;
@@ -28,8 +29,6 @@ namespace SkipdoorPathing
         private static readonly Dictionary<int, PawnDecisionCache> DecisionCache = new Dictionary<int, PawnDecisionCache>(512);
 
         private const int CHECK_INTERVAL_TICKS = 60; // at most once per second per pawn
-        private const int MAX_START_CANDIDATES = 3; // shortlist cap (keeps behavior similar while reducing path calls)
-        private const int MAX_END_CANDIDATES = 3;
 
         public static void UseDoorTeleporter(Pawn pawn, DoorTeleporter startTeleporter, DoorTeleporter endTeleporter)
         {
@@ -145,10 +144,14 @@ namespace SkipdoorPathing
             int maxWalk = (int)ModMain.Settings.MaxWalkToTeleporter;
             int maxWalkCost = maxWalk * 18; // same heuristic as before
 
+            // How many promising teleporters to fully path-evaluate on each side.
+            // (entry candidates + exit candidates)
+            int maxCandidates = Mathf.Clamp(ModMain.Settings.MaxCandidates, 1, 8);
+
             // --- Candidate shortlists (single pass over HashSet) ---
             int mapTeleporterCount = 0;
-            var startDists = new List<(DoorTeleporter t, int dist)>(MAX_START_CANDIDATES);
-            var endDists = new List<(DoorTeleporter t, int dist)>(MAX_END_CANDIDATES);
+            var startDists = new List<(DoorTeleporter t, int dist)>(maxCandidates);
+            var endDists = new List<(DoorTeleporter t, int dist)>(maxCandidates);
 
             foreach (var t in globalList)
             {
@@ -158,7 +161,7 @@ namespace SkipdoorPathing
                 int dStart = (pawnPos - t.Position).LengthManhattan;
                 if (dStart <= maxWalk)
                 {
-                    AddCandidateSortedLimited(startDists, t, dStart, MAX_START_CANDIDATES);
+                    AddCandidateSortedLimited(startDists, t, dStart, maxCandidates);
                 }
 
                 int dEnd = (t.Position - destCell).LengthManhattan;
@@ -167,11 +170,11 @@ namespace SkipdoorPathing
                     // IMPORTANT micro-optimization:
                     // Only pay HasEmptyAdjacentSpot() if this candidate might actually enter the top-N list.
                     // If endDists isn't full yet, or it's better than the current worst, then check adjacency.
-                    if (endDists.Count < MAX_END_CANDIDATES || dEnd < endDists[endDists.Count - 1].dist)
+                    if (endDists.Count < maxCandidates || dEnd < endDists[endDists.Count - 1].dist)
                     {
                         if (HasEmptyAdjacentSpot(t))
                         {
-                            AddCandidateSortedLimited(endDists, t, dEnd, MAX_END_CANDIDATES);
+                            AddCandidateSortedLimited(endDists, t, dEnd, maxCandidates);
                         }
                     }
                 }
@@ -209,11 +212,11 @@ namespace SkipdoorPathing
             startDists.Sort((a, b) => a.Item2.CompareTo(b.Item2));
             endDists.Sort((a, b) => a.Item2.CompareTo(b.Item2));
 
-            if (startDists.Count > MAX_START_CANDIDATES)
-                startDists.RemoveRange(MAX_START_CANDIDATES, startDists.Count - MAX_START_CANDIDATES);
+            if (startDists.Count > maxCandidates)
+                startDists.RemoveRange(maxCandidates, startDists.Count - maxCandidates);
 
-            if (endDists.Count > MAX_END_CANDIDATES)
-                endDists.RemoveRange(MAX_END_CANDIDATES, endDists.Count - MAX_END_CANDIDATES);
+            if (endDists.Count > maxCandidates)
+                endDists.RemoveRange(maxCandidates, endDists.Count - maxCandidates);
 
             // --- A. Compute real start costs (shortlist only) ---
             var startCosts = new List<(DoorTeleporter, float)>(startDists.Count);

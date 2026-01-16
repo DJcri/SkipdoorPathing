@@ -77,6 +77,16 @@ namespace SkipdoorPathing
             Settings.MaxWalkToTeleporter = listingStandard.Slider(Settings.MaxWalkToTeleporter, 200f, 400f);
             listingStandard.Label("Pawns won't consider walking further than this to reach a skipdoor.");
 
+            listingStandard.Gap();
+
+            // Candidate cap (pathfinding throttle)
+            int maxCandidates = Mathf.Clamp(Settings.MaxCandidates, 1, 8);
+            listingStandard.Label($"Max Portal Candidates: {maxCandidates}");
+            // Listing_Standard slider is float-based; round back to int.
+            float cand = listingStandard.Slider(maxCandidates, 1f, 8f);
+            Settings.MaxCandidates = Mathf.Clamp(Mathf.RoundToInt(cand), 1, 8);
+            listingStandard.Label("How many promising skipdoors to fully evaluate per side (entry + exit). Lower = faster, higher = smarter.");
+
             listingStandard.GapLine();
 
             // --- Custom Exclusions ---

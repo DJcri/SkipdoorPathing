@@ -15,6 +15,10 @@ namespace SkipdoorPathing
         public float MinTripDistance = 20f;      // If trip is shorter than this, don't bother checking teleporters
         public float MaxWalkToTeleporter = 300f;  // If teleporter is further than this from pawn/dest, ignore it
 
+        // How many promising teleporters to fully path-evaluate on each side (entry + exit).
+        // Lower values are faster; higher values are smarter in weird layouts.
+        public int MaxCandidates = 3;
+
         // Runtime cache (not saved to file)
         public HashSet<string> CachedExclusions = new HashSet<string>();
 
@@ -29,6 +33,7 @@ namespace SkipdoorPathing
             // Save new settings
             Scribe_Values.Look(ref MinTripDistance, "minTripDistance", 20f);
             Scribe_Values.Look(ref MaxWalkToTeleporter, "maxWalkToTeleporter", 300f);
+            Scribe_Values.Look(ref MaxCandidates, "maxCandidates", 3);
 
             base.ExposeData();
         }
