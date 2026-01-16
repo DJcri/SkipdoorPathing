@@ -27,6 +27,38 @@ namespace SkipdoorPathing
     [HarmonyPatch(typeof(Pawn_PathFollower), "StartPath")]
     public class HarmonyPatch_Pawn_PathFollower_StartPath
     {
+        private static bool IsPickUpAndHaulJob(Pawn pawn)
+        {
+            // We want to restrict job-switching behavior to Pick Up And Haul (PUAH) only.
+            // Different forks use different packageIds / defNames, so we match a few stable patterns.
+            try
+            {
+                JobDef jd = pawn?.CurJobDef;
+                if (jd == null) return false;
+
+                string defName = jd.defName ?? string.Empty;
+                if (defName.IndexOf("HaulToInventory", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                if (defName.IndexOf("UnloadYourHauledInventory", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                if (defName.IndexOf("PickUpAndHaul", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+
+                string pkg = jd.modContentPack?.PackageId ?? string.Empty;
+                pkg = pkg.ToLowerInvariant();
+                if (pkg.Contains("pickupandhaul")) return true;
+                if (pkg.Contains("pick_up_and_haul")) return true;
+                if (pkg.Contains("pick up and haul")) return true;
+                if (pkg.Contains("mehni.pickupandhaul")) return true;
+
+                string name = jd.modContentPack?.Name ?? string.Empty;
+                if (name.IndexOf("Pick Up And Haul", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                if (name.IndexOf("PickUpAndHaul", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
         // IMPORTANT: use ref so we can rewrite destination
         public static bool Prefix(Pawn_PathFollower __instance, ref LocalTargetInfo dest, ref PathEndMode peMode)
         {
@@ -94,13 +126,24 @@ namespace SkipdoorPathing
                     // can "teleport" the target item into the pawn's hands.
                     //
                     // To avoid that, for *non-drafted* pawns we perform an explicit teleporter-use job that
-                    // resumes the original job afterwards (VEF does this safely). For drafted movement, we
-                    // keep the plan-based reroute so player goto remains smooth.
+                    // resumes the original job afterwards (VEF does this safely). However, job switching can
+                    // break other job drivers, so we only do this for Pick Up And Haul (PUAH) jobs.
+                    // For all other non-drafted jobs we keep the plan-based reroute.
+                    // For drafted movement, we keep the plan-based reroute so player goto remains smooth.
 
-                    if (!pawn.Drafted)
+                    if (!pawn.Drafted && IsPickUpAndHaulJob(pawn))
                     {
                         SkipdoorPathingUtil.UseDoorTeleporter(pawn, startTeleporter, endTeleporter);
                         return false; // Skip the original StartPath for this tick; job will resume after teleport.
+                    }
+
+                    // Non-drafted but not PUAH: keep the original plan-based reroute to avoid breaking other jobs.
+                    if (!pawn.Drafted)
+                    {
+                        mgr?.SetPlan(pawn, startTeleporter, endTeleporter, dest, peMode);
+                        dest = startTeleporter.InteractionCell;
+                        peMode = PathEndMode.OnCell;
+                        return true;
                     }
 
                     // Drafted / player-forced: Save plan, then reroute the path to the ENTRY teleporter.
